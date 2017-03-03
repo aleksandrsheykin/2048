@@ -116,13 +116,11 @@
 				endY: 0
 			}
 			
-			var F_SIZE = 4;
+			var F_SIZE = 4;	//размер поля
 			var fieldMas = [];
 			var isAlready = [];
 			
 			reset();
-			
-			writeBox(fieldMas);
 			
             $playfield.unbind('mousedown').mousedown(function (e) {
                 mousedown = true;
@@ -289,8 +287,8 @@
 				return false;
 			}
 			
-			function reflectionField(m, v) {
-				if (v == 'left') {	//разворачиваем массив по вертикали
+			function reflectionField(m, v) {	//отражаем массив
+				if (v == 'left') {	//по вертикали
 					var t = [];
 					for (var i = 0; i <= m.length-1; i++) {
 						var l = m[i].length
@@ -300,7 +298,7 @@
 							m[i][l-j-1] = t;
 						}
 					}					
-				} else if (v == 'up') {	//разворачиваем массив по горизонтали
+				} else if (v == 'up') {	//по горизонтали
 					var t = [];
 					for (var i = 0; i <= m.length/2-1; i++) {
 						t = m[i];
@@ -339,7 +337,7 @@
 				fieldMas[tmp[t][0]][tmp[t][1]] = (Math.floor(Math.random()*4+4)%2)?2:4;	//вставляем 2 или 4 в рандомную свободную клетку
 			}
 		
-			function swingField(m, v) {
+			function swingField(m, v) {	//вращаем массив
 				var n = m.length;
 				if (v == 'up') {
 					for (var i = 0; i < n/2; i++) {
