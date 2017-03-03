@@ -329,10 +329,10 @@
 				if (gameOver == true && tmp.length == 0) { 
 					alert('GameOver'); 
 					reset(); 
+				} else {				
+					var t = Math.floor(Math.random() * (tmp.length) + 1)-1;
+					fieldMas[tmp[t][0]][tmp[t][1]] = (Math.floor(Math.random()*4+4)%2)?2:4;	//вставляем 2 или 4 в рандомную свободную клетку
 				}
-				
-				var t = Math.floor(Math.random() * (tmp.length) + 1)-1;
-				fieldMas[tmp[t][0]][tmp[t][1]] = (Math.floor(Math.random()*4+4)%2)?2:4;	//вставляем 2 или 4 в рандомную свободную клетку
 			}
 		
 			function swingField(m, v) {	//вращаем массив
