@@ -1,0 +1,407 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title></title>
+    <script type="text/javascript" src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.2/jquery.js"></script>
+    <style>
+        *{
+            -moz-user-select: none;
+            -khtml-user-select: none;
+            -ms-user-select: none;
+            -o-user-select: none;
+            -webkit-user-select: none;
+            user-select: none;
+            -webkit-user-drag: none;
+            -moz-user-drag: none;
+            -o-user-drag: none;
+            -khtml-user-drag: none;
+            -ms-user-drag: none;
+            user-drag: none;
+        }
+        #playfield{
+            position: absolute;
+            top: 100px;
+            left: 100px;
+            width: 400px;
+            height: 400px;
+            background: white;
+        }
+        .back{
+            position: absolute;
+            width: 100px;
+            height: 100px;
+            background: gray;
+        }
+        .thing{
+            position: absolute;
+            width: 100px;
+            height: 100px;
+            background: transparent;
+            color: black;
+            text-align: center;
+            font: 48px/96px Arial;
+        }
+        .thing.t2{
+            background: #18df00;
+        }
+        .thing.t2:after{
+            content: '2'
+        }
+        .thing.t4{
+            background: #5a9900;
+        }
+        .thing.t4:after{
+            content: '4'
+        }
+        .thing.t8{
+            background: #8c8e00;
+        }
+        .thing.t8:after{
+            content: '8'
+        }
+        .thing.t16{
+            background: #d38200;
+        }
+        .thing.t16:after{
+            content: '16'
+        }
+        .thing.t32{
+            background: #ae3900;
+        }
+        .thing.t32:after{
+            content: '32'
+        }
+        .thing.t64{
+            background: #931269;
+        }
+        .thing.t64:after{
+            content: '64'
+        }
+        .thing.t128{
+            background: #0a034c;
+        }
+        .thing.t128:after{
+            content: '128'
+        }
+        /* и так далее */
+
+    </style>
+    <script>
+
+        /*
+         Пример игры: http://gabrielecirulli.github.io/2048/ только в нем ходы делаются с помощью клавиатуры
+         Правила игры.
+         В каждом раунде появляется плитка номинала «2» (с вероятностью 90 %) или «4» (с вероятностью 10 %).
+         В начале игры на поле находится 1 клетка.
+         Чтобы сделать ход, игрок должен зажать левую кнопку мыши и переместить курсор в одном из четырех направлений.
+         Все клетку с числами при этом сдивгаются в этом направлении до упора.
+         Если при этом две плитки одного номинала «налетают» одна на другую, то они слипаются в одну,
+         номинал которой равен сумме соединившихся плиток.
+         После каждого хода на свободной секции поля появляется новая плитка номиналом «2» или «4».
+         Если при нажатии кнопки местоположение плиток или их номинал не изменится, то ход не совершается.
+         Тоесть новую плитку в этом случае добавлять не нужно.
+         За каждое соединение игровые очки увеличиваются на номинал получившейся плитки.
+         Игра заканчивается поражением, если после очередного хода невозможно совершить действие.
+         */
+        $(document).ready(function () {
+		
+            var $playfield = $('#playfield');
+            var mousedown = false;
+			
+			var cursorPoints = {
+				startX: 0,
+				startY: 0,
+				endX: 0,
+				endY: 0
+			}
+			
+			var F_SIZE = 4;
+			var fieldMas = [];
+			var isAlready = [];
+			
+			reset();
+			
+			writeBox(fieldMas);
+			
+            $playfield.unbind('mousedown').mousedown(function (e) {
+                mousedown = true;
+				cursorPoints.startX = e.pageX-$(this).offset().left;	//запоминаем начальную точку
+				cursorPoints.startY = e.pageY-$(this).offset().top;
+            });
+            $playfield.unbind('mouseup').mouseup(function (e) {
+                mousedown = false;
+				cursorPoints.endX = e.pageX-$(this).offset().left;	//запоминаем конечную точку
+				cursorPoints.endY = e.pageY-$(this).offset().top;
+				
+				mainCalculate(getCursorVector(cursorPoints), fieldMas);
+				newStep();
+				writeBox(fieldMas);
+
+            });
+			
+			function getCursorVector(c) {	//left, right, up, down
+				hShift = c.startX-c.endX;
+				vShift = c.startY-c.endY;
+				
+				if (Math.abs(hShift) > Math.abs(vShift)) {
+					if (hShift<0) { 
+						return 'right'; 
+					} else {
+						return 'left';
+					}
+				} else {
+					if (vShift<0) { 
+						return 'down'; 
+					} else {
+						return 'up';
+					}
+				}
+			}
+			
+			function writeBox(m) {	//расставляет фишки на поле
+				var $boxes = $('#boxes');
+				$boxes.text('');
+				for (var i = 0; i < m.length; i++) {
+					for (var j = 0; j < m[i].length; j++) {
+						if (m[i][j] > 0) {
+							$boxes.append('<div class="thing t'+m[i][j]+'" style="top: '+i*100+'px; left: '+j*100+'px;"></div>');
+						}
+					}
+				}
+				
+			}
+
+			function mainCalculate(vector, m) {	//сдвиг
+				m = reflectionField(m, vector);
+				if (vector == 'up' || vector == 'down') {
+					m = swingField(m, vector);
+				}
+				
+				for (var i = 0; i < m.length; i++) {
+					for (var j = m[i].length-1; j >= 0; j--) {
+						if (j == m[i].length-1) {	//первая
+							if (m[i][j] === 0) {
+								if (getIndexNext(m, i, j, 1) !== false) {
+									m[i][j] = getValueNext(m, i, j, 1);
+									m[i][getIndexNext(m, i, j, 1)] = 0;
+								}
+							} else {
+								if (m[i][j] == getValueNext(m, i, j, 1)) {
+									m[i][j] += getValueNext(m, i, j, 1);
+									isAlready[i][j] = 1;
+									m[i][getIndexNext(m, i, j, 1)] = 0;
+								}
+							}
+							continue;
+						}
+						
+						if (j == 0) { 	//последняя
+							if (m[i][j] != 0 ) {
+								if (getIndexNext(m, i, j, 0) !== false) {
+									var t = m[i][j];
+									m[i][j] = 0;										
+									m[i][getIndexNext(m, i, j, 0)-1] = t;
+								} 
+							}
+							continue;
+						}
+						
+						if (m[i][j] == 0) {		//середина
+							if (getIndexNext(m, i, j, 1) !== false) {
+								if (getIndexNext(m, i, j, 0) !== false) {
+									if (getValueNext(m, i, j, 1) == getValueNext(m, i, j, 0)) {
+										m[i][getIndexNext(m, i, j, 0)] += getValueNext(m, i, j, 1);
+										isAlready[i][getIndexNext(m, i, j, 0)] = 1;
+										m[i][getIndexNext(m, i, j, 1)] = 0;
+									} else {
+										m[i][getIndexNext(m, i, j, 0)-1] = getValueNext(m, i, j, 1);
+										m[i][getIndexNext(m, i, j, 1)] = 0;
+									}
+								} else {
+									m[i][j] = getValueNext(m, i, j, 1);
+									m[i][getIndexNext(m, i, j, 1)] = 0;
+								}
+							}
+						} else {	//текущая не пустая
+							if (getIndexNext(m, i, j, 0) !== false) {
+								if (m[i][j] == getValueNext(m, i, j, 0)) {
+									m[i][getIndexNext(m, i, j, 0)] += m[i][j];
+									isAlready[i][getIndexNext(m, i, j, 0)] = 1;
+									m[i][j] = 0;
+								}
+							} else {
+								if (getIndexNext(m, i, j, 1) !== false) {
+									if (m[i][j] == getValueNext(m, i, j, 1)) {
+										m[i][j] += getValueNext(m, i, j, 1);
+										isAlready[i][j] = 1;
+										m[i][getIndexNext(m, i, j, 1)] = 0;
+									}
+								} 
+							}
+						}
+					}
+				}
+				
+				
+				if (vector == 'up' || vector == 'down') {
+					m = swingField(m, vector=='up'?'down':'up');
+					m = reflectionField(m, vector=='up'?'down':'up');
+				}
+				m = reflectionField(m, vector);
+			}
+			
+			function getIndexNext(m, i, j, left) {	//возвращает индекс ближайшего не пустого
+				if (left == 1) {
+					for (var a = j-1; a>=0; a--) {
+						if (m[i][a] != 0) {
+							//if (isAlready[i][a] == 1) { return false; }
+							return a;
+						}
+					}
+				} else {
+					for (var a = j+1; a<=m.length-1; a++) {
+						if (m[i][a] != 0) {
+							//if (isAlready[i][a] == 1) { return false; }
+							return a;
+						}
+					}
+				}
+				return false;
+			}
+			
+			function getValueNext(m, i, j, left) {	//возвращает значение ближайшего доступного
+				if (left == 1) {
+					for (var a = j-1; a>=0; a--) {
+						if (m[i][a] != 0) {
+							if (isAlready[i][a] == 1) { return false; }
+							return m[i][a];
+						}
+					}
+				} else {
+					for (var a = j+1; a<=m.length-1; a++) {
+						if (m[i][a] != 0) {
+							if (isAlready[i][a] == 1) { return false; }
+							return m[i][a];
+						}
+					}
+				}
+				return false;
+			}
+			
+			function reflectionField(m, v) {
+				if (v == 'left') {	//разворачиваем массив по вертикали
+					var t = [];
+					for (var i = 0; i <= m.length-1; i++) {
+						var l = m[i].length
+						for (var j = 0; j <= l/2-1; j++) {
+							t = m[i][j];
+							m[i][j] = m[i][l-j-1];
+							m[i][l-j-1] = t;
+						}
+					}					
+				} else if (v == 'up') {	//разворачиваем массив по горизонтали
+					var t = [];
+					for (var i = 0; i <= m.length/2-1; i++) {
+						t = m[i];
+						m[i] = m[m.length-i-1];
+						m[m.length-i-1] = t;
+					}
+				}
+				return m;
+			}
+		
+			function newStep() {
+				var gameOver = true;
+				for (var i = 0; i < isAlready.length; i++){
+					for (var j = 0; j < isAlready.length; j++){
+						if (isAlready[i][j] != 0) { gameOver = false; }
+						isAlready[i][j] = 0;
+					}
+				}
+							
+				//рандом
+				var tmp = [];	
+				for (var i = 0; i < fieldMas.length; i++){
+					for (var j = 0; j < fieldMas.length; j++){
+						if (fieldMas[i][j] == 0) {
+							tmp.push([i, j]);
+						}
+					}
+				}
+
+				if (gameOver == true && tmp.length == 0) { 
+					alert('GameOver'); 
+					reset(); 
+				}
+				
+				var t = Math.floor(Math.random() * (tmp.length) + 1)-1;
+				fieldMas[tmp[t][0]][tmp[t][1]] = (Math.floor(Math.random()*4+4)%2)?2:4;	//вставляем 2 или 4 в рандомную свободную клетку
+			}
+		
+			function swingField(m, v) {
+				var n = m.length;
+				if (v == 'up') {
+					for (var i = 0; i < n/2; i++) {
+						for (var j=i; j < n-1-i; j++) {
+							var tmp = m[i][j];
+							m[i][j] = m[j][n-1-i];
+							m[j][n-1-i] = m[n-1-i][n-1-j];
+							m[n-1-i][n-1-j] = m[n-1-j][i];
+							m[n-1-j][i] = tmp;
+						}
+					}
+				} else {			
+					for (var i=0; i < n/2; i++) {
+						for (var j=i; j < n-1-i; j++) {
+							var tmp = m[i][j];
+							m[i][j] = m[n-j-1][i];
+							m[n-j-1][i] = m[n-i-1][n-j-1];
+							m[n-i-1][n-j-1] = m[j][n-i-1];
+							m[j][n-i-1] = tmp;
+						}
+					}
+				}
+				return m;
+			}
+		
+			function reset() {
+				for (var i = 0; i < F_SIZE; i++){
+					fieldMas[i] = [];
+					isAlready[i] = [];
+					for (var j = 0; j < F_SIZE; j++){
+						fieldMas[i][j] = 0;
+						isAlready[i][j] = 0;
+				}}
+				fieldMas[0][0] = 2;
+				writeBox(fieldMas);
+			}
+		});
+    </script>
+</head>
+<body>
+<div id="playfield">
+    <div class="back" style="top: 0px; left: 0px;"></div>
+    <div class="back" style="top: 100px; left: 0px;"></div>
+    <div class="back" style="top: 200px; left: 0px;"></div>
+    <div class="back" style="top: 300px; left: 0px;"></div>
+    <div class="back" style="top: 0px; left: 100px;"></div>
+    <div class="back" style="top: 100px; left: 100px;"></div>
+    <div class="back" style="top: 200px; left: 100px;"></div>
+    <div class="back" style="top: 300px; left: 100px;"></div>
+    <div class="back" style="top: 0px; left: 200px;"></div>
+    <div class="back" style="top: 100px; left: 200px;"></div>
+    <div class="back" style="top: 200px; left: 200px;"></div>
+    <div class="back" style="top: 300px; left: 200px;"></div>
+    <div class="back" style="top: 0px; left: 300px;"></div>
+    <div class="back" style="top: 100px; left: 300px;"></div>
+    <div class="back" style="top: 200px; left: 300px;"></div>
+    <div class="back" style="top: 300px; left: 300px;"></div>
+
+	<div id="boxes">
+		<div class="thing t2" style="top: 0px; left: 0px;"></div>
+	</div>
+
+</div>
+</body>
+</html>
