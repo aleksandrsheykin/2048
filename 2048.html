@@ -390,7 +390,7 @@
 					reset(); 
 				} else {
 					var t = Math.floor(Math.random() * (tmp.length) + 1)-1;
-					fieldMas[tmp[t][0]][tmp[t][1]] = (Math.floor(Math.random()*4+4)%2)?2:4;	//вставляем 2 или 4 в рандомную свободную клетку
+					fieldMas[tmp[t][0]][tmp[t][1]] = (Math.floor(Math.random()*9)+1)==9?4:2;	//вставляем 2 или 4 в рандомную свободную клетку
 				}
 
 				$boxes.append('<div class="thing t'+fieldMas[tmp[t][0]][tmp[t][1]]+'" style="opacity: 0; top: '+tmp[t][0]*100+'px; left: '+tmp[t][1]*100+'px;" id="'+tmp[t][0]+'x'+tmp[t][1]+'"></div>');
