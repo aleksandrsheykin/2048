@@ -27,6 +27,64 @@
             height: 400px;
             background: white;
         }
+		
+		#points {
+            position: absolute;
+            top: 50px;
+            left: 100px;
+            width: 400px;
+            height: 50px;
+			text-align: center;
+			font-size: 40px;
+		}
+		#points:before {
+			content: 'points: ';
+		}
+		#bar {
+            position: absolute;
+            top: 100px;
+            left: 100px;
+            width: 400px;
+            height: 400px;
+            background: yellow;
+			opacity: 0.5;
+			text-align: center;
+			z-index: 10;
+		}
+		#btnStart {
+			margin-left: 100px;
+			margin-top: 150px;
+			width: 200px;
+			height: 100px;
+			background: green;
+			opacity: 1;
+			font-size: 80px;
+		}
+		#btnStart:hover {
+			margin-left: 95px;
+			margin-top: 145px;
+			padding: 10px;
+			cursor: pointer;
+		}
+		#gameOver {
+			display: none;
+			position: absolute;
+			font-size: 40px;
+			color: green;
+			width: 400px;
+            top: 100px;
+            left: 100px;
+			z-index: 20;
+			text-align: center;
+			padding-top: 30px;
+		}
+		#gameOver:before {
+			content: 'Game Over ';
+		}
+		#gameOver:after {
+			content: ' points';
+		}
+		
         .back{
             position: absolute;
             width: 100px;
@@ -107,7 +165,9 @@
             var $playfield = $('#playfield');
             var mousedown = false;
 			var gameOver = true;
+			var step = false;
 			var $boxes = $('#boxes');
+			var points = 0;
 			
 			var cursorPoints = {
 				startX: 0,
@@ -121,6 +181,10 @@
 			var isAlready = [];
 			
 			reset();
+			$("#btnStart").click(function() {
+				$('#bar').hide();
+				$('#gameOver').hide();
+			});
 			
             $playfield.unbind('mousedown').mousedown(function (e) {
 				mousedown = true;
@@ -184,10 +248,12 @@
 						}
 					}
 				}
-				
+				var $p = $('#points');
+				$p.text(points);
 			}
 			
 			function mainCalculate(vector, m) {	//сдвиг
+				step = false;
 				//крутим массив под правый сдвиг
 				if ((vector == 'up') || (vector == 'down')) {
 					m = swingField(m, vector);
@@ -203,12 +269,15 @@
 								if (getIndexNext(m, i, j, 1) !== false) {
 									m[i][j] = getValueNext(m, i, j, 1);
 									m[i][getIndexNext(m, i, j, 1)] = 0;
+									step = true;
 								}
 							} else {
 								if (m[i][j] == getValueNext(m, i, j, 1)) {
 									m[i][j] += getValueNext(m, i, j, 1);
 									isAlready[i][j] = 1;
 									m[i][getIndexNext(m, i, j, 1)] = 0;
+									step = true;
+									points += m[i][j];
 								}
 							}
 							continue;
@@ -221,10 +290,13 @@
 										m[i][getIndexNext(m, i, j, 0)] += m[i][j];
 										isAlready[i][getIndexNext(m, i, j, 0)] = 1;
 										m[i][j] = 0;
+										step = true;
+										points += m[i][getIndexNext(m, i, j, 0)];
 									} else {
 										var t = m[i][j];
 										m[i][j] = 0;
 										m[i][getIndexNext(m, i, j, 0)-1] = t;
+										step = true;
 									}
 								} 
 							}
@@ -238,13 +310,17 @@
 										m[i][getIndexNext(m, i, j, 0)] += getValueNext(m, i, j, 1);
 										isAlready[i][getIndexNext(m, i, j, 0)] = 1;
 										m[i][getIndexNext(m, i, j, 1)] = 0;
+										step = true;
+										points += m[i][getIndexNext(m, i, j, 0)];
 									} else {
 										m[i][getIndexNext(m, i, j, 0)-1] = getValueNext(m, i, j, 1);
 										m[i][getIndexNext(m, i, j, 1)] = 0;
+										step = true;
 									}
 								} else {
 									m[i][j] = getValueNext(m, i, j, 1);
 									m[i][getIndexNext(m, i, j, 1)] = 0;
+									step = true;
 								}
 							}
 						} else {	//текущая не пустая
@@ -253,6 +329,8 @@
 									m[i][getIndexNext(m, i, j, 0)] += m[i][j];
 									isAlready[i][getIndexNext(m, i, j, 0)] = 1;
 									m[i][j] = 0;
+									step = true;
+									points += m[i][getIndexNext(m, i, j, 0)];
 								}
 							} else {
 								if (getIndexNext(m, i, j, 1) !== false) {
@@ -260,6 +338,8 @@
 										m[i][j] += getValueNext(m, i, j, 1);
 										isAlready[i][j] = 1;
 										m[i][getIndexNext(m, i, j, 1)] = 0;
+										step = true;
+										points += m[i][j];
 									}
 								} 
 							}
@@ -370,12 +450,17 @@
 						isAlready[i][j] = 0;
 				}}
 				fieldMas[0][0] = 2;
-				
+				points = 0;
 				writeBox(fieldMas);
 			}
 		
 			function addBlockWithAnimation() {	//добавляет новую фишку на поле
-				//рандом
+			
+				if (!step) {
+					return;
+				}
+			
+				//рандом			
 				var tmp = [];	
 				for (var i = 0; i < fieldMas.length; i++){
 					for (var j = 0; j < fieldMas.length; j++){
@@ -385,9 +470,12 @@
 					}
 				}
 				
-				if (gameOver == true && tmp.length == 0) { 
-					alert('GameOver'); 
-					reset(); 
+				if (gameOver == true && tmp.length == 0) { 	//game over
+					$('#bar').show();
+					$('#gameOver').text(points);
+					$('#gameOver').show();
+					reset();
+					return;
 				} else {
 					var t = Math.floor(Math.random() * (tmp.length) + 1)-1;
 					fieldMas[tmp[t][0]][tmp[t][1]] = (Math.floor(Math.random()*9)+1)==9?4:2;	//вставляем 2 или 4 в рандомную свободную клетку
@@ -402,6 +490,11 @@
     </script>
 </head>
 <body>
+<div id="points">0</div>
+<div id="gameOver"></div>
+<div id="bar">
+	<div id="btnStart">start</div>
+</div>
 <div id="playfield">
     <div class="back" style="top: 0px; left: 0px;"></div>
     <div class="back" style="top: 100px; left: 0px;"></div>
