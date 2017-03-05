@@ -28,62 +28,62 @@
             background: white;
         }
 		
-		#points {
+        #points {
             position: absolute;
             top: 50px;
             left: 100px;
             width: 400px;
             height: 50px;
-			text-align: center;
-			font-size: 40px;
+            text-align: center;
+            font-size: 40px;
+        }
+        #points:before {
+            content: 'points: ';
 		}
-		#points:before {
-			content: 'points: ';
-		}
-		#bar {
+        #bar {
             position: absolute;
             top: 100px;
             left: 100px;
             width: 400px;
             height: 400px;
             background: yellow;
-			opacity: 0.5;
-			text-align: center;
-			z-index: 10;
+            opacity: 0.5;
+            text-align: center;
+            z-index: 10;
+        }
+        #btnStart {
+            margin-left: 100px;
+            margin-top: 150px;
+            width: 200px;
+            height: 100px;
+            background: green;
+            opacity: 1;
+            font-size: 80px;
 		}
-		#btnStart {
-			margin-left: 100px;
-			margin-top: 150px;
-			width: 200px;
-			height: 100px;
-			background: green;
-			opacity: 1;
-			font-size: 80px;
-		}
-		#btnStart:hover {
-			margin-left: 95px;
-			margin-top: 145px;
-			padding: 10px;
-			cursor: pointer;
-		}
-		#gameOver {
-			display: none;
-			position: absolute;
-			font-size: 40px;
-			color: green;
-			width: 400px;
+        #btnStart:hover {
+            margin-left: 95px;
+            margin-top: 145px;
+            padding: 10px;
+            cursor: pointer;
+        }
+        #gameOver {
+            display: none;
+            position: absolute;
+            font-size: 40px;
+            color: green;
+            width: 400px;
             top: 100px;
             left: 100px;
-			z-index: 20;
-			text-align: center;
-			padding-top: 30px;
-		}
-		#gameOver:before {
-			content: 'Game Over ';
-		}
-		#gameOver:after {
-			content: ' points';
-		}
+            z-index: 20;
+            text-align: center;
+            padding-top: 30px;
+        }
+        #gameOver:before {
+            content: 'Game Over ';
+        }
+        #gameOver:after {
+            content: ' points';
+        }
 		
         .back{
             position: absolute;
@@ -164,21 +164,21 @@
 		
             var $playfield = $('#playfield');
             var mousedown = false;
-			var gameOver = true;
-			var step = false;
-			var $boxes = $('#boxes');
-			var points = 0;
+            var gameOver = true;
+            var step = false;
+            var $boxes = $('#boxes');
+            var points = 0;
 			
-			var cursorPoints = {
+            var cursorPoints = {
 				startX: 0,
 				startY: 0,
 				endX: 0,
 				endY: 0
-			}
+            }
 
-			var F_SIZE = 4;	//размер поля
-			var fieldMas = [];
-			var isAlready = [];
+            var F_SIZE = 4;	//размер поля
+            var fieldMas = [];
+            var isAlready = [];
 			
 			reset();
 			$("#btnStart").click(function() {
