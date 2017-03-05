@@ -170,21 +170,21 @@
             var points = 0;
 			
             var cursorPoints = {
-				startX: 0,
-				startY: 0,
-				endX: 0,
-				endY: 0
+                startX: 0,
+                startY: 0,
+                endX: 0,
+                endY: 0
             }
 
             var F_SIZE = 4;	//размер поля
             var fieldMas = [];
             var isAlready = [];
 			
-			reset();
-			$("#btnStart").click(function() {
-				$('#bar').hide();
-				$('#gameOver').hide();
-			});
+            reset();
+            $("#btnStart").click(function() {
+                $('#bar').hide();
+                $('#gameOver').hide();
+            });
 			
             $playfield.unbind('mousedown').mousedown(function (e) {
 				mousedown = true;
