@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <title></title>
     <script type="text/javascript" src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.2/jquery.js"></script>
+    <script type="text/javascript" src="game.js"></script>
     <style>
         *{
             -moz-user-select: none;
@@ -161,48 +162,29 @@
         $(document).ready(function () {
 		
             var $playfield = $('#playfield');
-            var mousedown = false;
-            var gameOver = true;
-            var step = false;
-            var $boxes = $('#boxes');
-            var points = 0;
-			
-            var cursorPoints = {
-                startX: 0,
-                startY: 0,
-                endX: 0,
-                endY: 0
-            }
-
-            var F_SIZE = 4;	//размер поля
-            var fieldMas = [];
-            var isAlready = [];
-			
-            reset();
+            var game = new Game();
+            game.reset();
+            
             $("#btnStart").click(function() {
-                $('#bar').hide();
-                $('#gameOver').hide();
+                game.start();
             });
 			
             $playfield.unbind('mousedown').mousedown(function (e) {
-				mousedown = true;
-				cursorPoints.startX = e.pageX-$(this).offset().left;	//запоминаем начальную точку
-				cursorPoints.startY = e.pageY-$(this).offset().top;
+				game.mousedown = true;
+				game.cursorPoints.startX = e.pageX-$(this).offset().left;	//запоминаем начальную точку
+				game.cursorPoints.startY = e.pageY-$(this).offset().top;
 
             });
             $playfield.unbind('mouseup').mouseup(function (e) {
-				cursorPoints.endX = e.pageX-$(this).offset().left;	//запоминаем конечную точку
-				cursorPoints.endY = e.pageY-$(this).offset().top;
-				if (mousedown == true) {
-					vector = getCursorVector(cursorPoints);
-					if (vector) {
-						mainCalculate(vector, fieldMas);
-						newStep();
-						writeBox(fieldMas);
-						setTimeout(addBlockWithAnimation, 200);
-					}
-				}
-				mousedown = false;
+				game.cursorPoints.endX = e.pageX-$(this).offset().left;	//запоминаем конечную точку
+				game.cursorPoints.endY = e.pageY-$(this).offset().top;
+                if (game.getVector) {
+                    game.mainCalculate(vector, fieldMas);
+                    game.newStep();
+                    game.writeBox(fieldMas);
+                    setTimeout(addBlockWithAnimation, 200);
+                }
+				game.mousedown = false;
             });
 			
 			function getCursorVector(c) {	//left, right, up, down, false
